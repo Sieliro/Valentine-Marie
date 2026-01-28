@@ -14,19 +14,25 @@ body {
   align-items: center;
   height: 100vh;
 }
+
 .container {
   position: relative;
   width: 90%;
   max-width: 700px;
 }
+
 img.main {
   width: 100%;
   border-radius: 12px;
 }
+
+/* HITBOXEN */
 .hitbox {
   position: absolute;
   cursor: pointer;
 }
+
+/* Hover Preview (nur Desktop) */
 .hover-preview {
   position: absolute;
   width: 100%;
@@ -37,6 +43,15 @@ img.main {
   border-radius: 12px;
   opacity: 0.9;
 }
+
+/* Hover auf Touch-Geräten AUS */
+@media (hover: none) {
+  .hover-preview {
+    display: none !important;
+  }
+}
+
+/* Radiergummi */
 #eraser {
   position: absolute;
   width: 80px;
@@ -53,14 +68,14 @@ img.main {
   100% { transform: rotate(0deg); }
 }
 
-/* ❤️ Herzen */
+/* Herzen */
 @keyframes floatUp {
   0% {
     transform: translateY(0) scale(1);
     opacity: 1;
   }
   100% {
-    transform: translateY(calc(var(--float-height, -250px))) scale(0.5);
+    transform: translateY(var(--float-height)) scale(0.6);
     opacity: 0;
   }
 }
@@ -72,7 +87,7 @@ img.main {
   animation: floatUp linear infinite;
 }
 
-/* HITBOXEN */
+/* HITBOXEN POSITION */
 #ja { left: 7%; top: 21%; width: 10%; height: 7%; }
 #elan { left: 7%; top: 33%; width: 18%; height: 12%; }
 #nein { left: 7%; top: 49%; width: 4%; height: 3%; }
@@ -81,9 +96,10 @@ img.main {
 </head>
 
 <body>
-<div class="container">
+<div class="container" id="container">
+
   <img id="bild" class="main" src="Original.png">
-  <img id="hoverPreview" class="hover-preview" src="">
+  <img id="hoverPreview" class="hover-preview">
   <img id="eraser" src="Radiergummi.png">
 
   <audio id="audioPlayer" src="Billie.mp3" preload="auto"></audio>
@@ -96,49 +112,72 @@ img.main {
 
 <script>
 const bild = document.getElementById("bild");
+const hoverPreview = document.getElementById("hoverPreview");
+const eraser = document.getElementById("eraser");
 const audio = document.getElementById("audioPlayer");
+const container = document.getElementById("container");
 
 const ja = document.getElementById("ja");
 const elan = document.getElementById("elan");
 const nein = document.getElementById("nein");
 const vielleicht = document.getElementById("vielleicht");
 
+const hitboxes = [ja, elan, nein, vielleicht];
+
+// ❤️ EINSTELLUNG
 const heartFloatHeight = "-300px";
 
-/* Hover */
-ja.onmouseenter = () => showPreview("Ja.png");
-elan.onmouseenter = () => showPreview("Jamitmehrelan.png");
-nein.onmouseenter = () => showPreview("Nein.png");
-vielleicht.onmouseenter = () => showPreview("Vielleicht.png");
-[ja, elan, nein, vielleicht].forEach(e => e.onmouseleave = hidePreview);
+// Hover NUR Desktop
+if (window.matchMedia("(hover: hover)").matches) {
+  ja.onmouseenter = () => showPreview("Ja.png");
+  elan.onmouseenter = () => showPreview("Jamitmehrelan.png");
+  nein.onmouseenter = () => showPreview("Nein.png");
+  vielleicht.onmouseenter = () => showPreview("Vielleicht.png");
+
+  hitboxes.forEach(h => h.onmouseleave = hidePreview);
+}
 
 function showPreview(src) {
   hoverPreview.src = src;
   hoverPreview.style.display = "block";
 }
+
 function hidePreview() {
   hoverPreview.style.display = "none";
 }
 
-/* ❤️ JA & ELAN → LIEBE */
-function goToLiebe() {
-  bild.src = "Liebe.png";
-
-  [ja, elan, nein, vielleicht].forEach(b => {
-    b.style.display = "none";
-    b.style.pointerEvents = "none";
-  });
-
-  audio.currentTime = 0;
-  audio.play();
-
-  createFloatingHearts();
+// ❤️ Herzen
+function startHearts() {
+  for (let i = 0; i < 15; i++) {
+    const heart = document.createElement("img");
+    heart.src = "Herz.png";
+    heart.className = "heart";
+    heart.style.left = Math.random() * 100 + "%";
+    heart.style.bottom = "-30px";
+    heart.style.setProperty("--float-height", heartFloatHeight);
+    heart.style.animationDuration = (8 + Math.random() * 4) + "s";
+    container.appendChild(heart);
+  }
 }
 
-ja.onclick = goToLiebe;
-elan.onclick = goToLiebe;
+// ❌ Hitboxen aus
+function disableHitboxes() {
+  hitboxes.forEach(h => h.style.pointerEvents = "none");
+}
 
-/* Vielleicht */
+// ❤️ JA & ELAN → LIEBE
+function showLove() {
+  bild.src = "Liebe.png";
+  audio.currentTime = 0;
+  audio.play();
+  disableHitboxes();
+  startHearts();
+}
+
+ja.onclick = showLove;
+elan.onclick = showLove;
+
+// 🤔 Vielleicht
 vielleicht.onclick = () => {
   setTimeout(() => bild.src = "Nachdenken.png", 1000);
   setTimeout(() => bild.src = "Genug.png", 5000);
@@ -146,28 +185,24 @@ vielleicht.onclick = () => {
   setTimeout(() => bild.src = "Original.png", 9000);
 };
 
-/* Nein */
+// 🧽 Nein
 nein.onclick = () => {
   bild.src = "Nein.png";
+  eraser.style.display = "block";
+  eraser.style.top = "46%";
+  eraser.style.left = "120%";
+
+  setTimeout(() => eraser.style.left = "7.5%", 50);
+  setTimeout(() => eraser.style.animation = "wiggle 0.6s", 1900);
+
+  eraser.addEventListener("animationend", function handler() {
+    eraser.style.left = "-30%";
+    eraser.style.animation = "none";
+    bild.src = "Original.png";
+    eraser.removeEventListener("animationend", handler);
+    setTimeout(() => eraser.style.display = "none", 1800);
+  });
 };
-
-/* Herzen */
-function createFloatingHearts() {
-  const container = document.querySelector(".container");
-
-  for (let i = 0; i < 15; i++) {
-    const heart = document.createElement("img");
-    heart.src = "Herz.png";
-    heart.className = "heart";
-
-    heart.style.left = Math.random() * 100 + "%";
-    heart.style.bottom = "-20px";
-    heart.style.setProperty("--float-height", heartFloatHeight);
-    heart.style.animationDuration = (6 + Math.random() * 4) + "s";
-
-    container.appendChild(heart);
-  }
-}
 </script>
 </body>
 </html>
