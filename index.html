@@ -201,9 +201,13 @@ vielleicht.onclick = () => {
 nein.onclick = () => {
   clearOverlays();
   bild.src = "Nein.png";
+
+  const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
   eraser.style.display = "block";
-  eraser.style.top = "46%";
+  eraser.style.top = isMobile ? "38%" : "46%";
   eraser.style.left = "120%";
+  eraser.style.animation = "none";
 
   setTimeout(() => eraser.style.left = "7.5%", 50);
   setTimeout(() => eraser.style.animation = "wiggle 0.6s", 1900);
@@ -216,6 +220,8 @@ nein.onclick = () => {
     setTimeout(() => eraser.style.display = "none", 1800);
   });
 };
+
 </script>
 </body>
 </html>
+
